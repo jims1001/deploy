@@ -1,0 +1,27 @@
+
+services:
+  ispn1:
+    image: quay.io/infinispan/server:15.0
+    environment:
+      - USER=admin
+      - PASS=admin123
+      - INFINISPAN_NODE_NAME=ispn1
+      - JGROUPS_TRANSPORT_STACK=tcp
+      - JGROUPS_DISCOVERY_PROTOCOL=TCPPING
+      - JGROUPS_DISCOVERY_PROPERTIES=initial_hosts=ispn1[7800],ispn2[7800];port_range=0
+      - JAVA_OPTIONS=-Dinfinispan.global-state.persistent-location=/opt/infinispan/server/data/global-ispn1 -Dinfinispan.global-state.temporary-location=/opt/infinispan/server/data/tmp-ispn1
+
+  ispn2:
+    image: quay.io/infinispan/server:15.0
+    environment:
+      - USER=admin
+      - PASS=admin123
+      - INFINISPAN_NODE_NAME=ispn2
+      - JGROUPS_TRANSPORT_STACK=tcp
+      - JGROUPS_DISCOVERY_PROTOCOL=TCPPING
+      - JGROUPS_DISCOVERY_PROPERTIES=initial_hosts=ispn1[7800],ispn2[7800];port_range=0
+      - JAVA_OPTIONS=-Dinfinispan.global-state.persistent-location=/opt/infinispan/server/data/global-ispn2 -Dinfinispan.global-state.temporary-location=/opt/infinispan/server/data/tmp-ispn2
+
+volumes:
+  ispn1_data:
+  ispn2_data:
