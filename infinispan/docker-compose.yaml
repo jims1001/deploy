@@ -1,8 +1,14 @@
 
+networks:
+  deploy_default:
+    external: true
+
 services:
   ispn1:
     image: quay.io/infinispan/server:15.0
     container_name: ispn1
+    networks: [deploy_default]
+    restart: unless-stopped
     environment:
       USER: admin
       PASS: admin123
@@ -10,10 +16,10 @@ services:
       JGROUPS_TRANSPORT_STACK: tcp
       JGROUPS_DISCOVERY_PROTOCOL: TCPPING
       JGROUPS_DISCOVERY_PROPERTIES: initial_hosts=ispn1[7800],ispn2[7800];port_range=0
-      # 每个节点独立的数据目录（解决全局锁冲突的关键）
       JAVA_OPTIONS: >-
         -Djboss.server.data.dir=/opt/infinispan/server/data-node1
         -Dinfinispan.cluster.name=ispn-cluster
+        -Dinfinispan.bind.address=0.0.0.0
     ports:
       - "11222:11222"
       - "7800:7800"
@@ -23,6 +29,8 @@ services:
   ispn2:
     image: quay.io/infinispan/server:15.0
     container_name: ispn2
+    networks: [deploy_default]
+    restart: unless-stopped
     environment:
       USER: admin
       PASS: admin123
@@ -33,6 +41,7 @@ services:
       JAVA_OPTIONS: >-
         -Djboss.server.data.dir=/opt/infinispan/server/data-node2
         -Dinfinispan.cluster.name=ispn-cluster
+        -Dinfinispan.bind.address=0.0.0.0
     ports:
       - "11223:11222"
       - "7801:7800"

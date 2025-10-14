@@ -1,9 +1,6 @@
-
 networks:
-  # 你的 Infinispan 所在网络；已经存在，因此标记 external
   deploy_default:
     external: true
-  # Postgres 与 Keycloak 的内部网络
   app_net:
     driver: bridge
 
@@ -37,39 +34,40 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-
-    # 宿主:容器 都用 9090
     ports:
       - "9090:9090"
-
     environment:
-      # 管理员
+      # 👤 管理员账户
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
 
-      # 数据库
+      # 🗄️ 数据库配置
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: keycloak
 
-      # 运行配置
+      # ⚙️ 运行配置
       KC_HTTP_PORT: "9090"
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KC_LOG_LEVEL: info
-      # 开发环境不需要代理识别，避免告警；如在反代后面再设 edge
       KC_PROXY: "none"
 
-      # 🔗 连接你已运行的 Infinispan（Hot Rod）
-      # 这里使用容器名（要求 keycloak 也接入 deploy_default 网络）
-      KC_CACHE_REMOTE_HOST: ispn1
+      # 🔗 连接外部 Infinispan 集群（HotRod）
+      # KC_CACHE_REMOTE_HOST: ispn1
+      # KC_CACHE_REMOTE_PORT: "11222"
+      # KC_CACHE_REMOTE_USERNAME: admin
+      # KC_CACHE_REMOTE_PASSWORD: admin123
+      # KC_CACHE_REMOTE_TLS_ENABLED: "false"
+
+      KC_CACHE_REMOTE_HOST: host.docker.internal
       KC_CACHE_REMOTE_PORT: "11222"
       KC_CACHE_REMOTE_USERNAME: admin
       KC_CACHE_REMOTE_PASSWORD: admin123
       KC_CACHE_REMOTE_TLS_ENABLED: "false"
 
-      # 降低内存占用 & 忽略 persistence.xml 提示
+      # 🧠 JVM 优化 & 忽略不必要的 JPA 提示
       JAVA_OPTS: >-
         -Dquarkus.hibernate-orm.persistence-xml.ignore=true
         -XX:MaxRAMPercentage=50
@@ -85,7 +83,7 @@ services:
 
     volumes:
       - kc_data:/opt/keycloak/data
-      # 可选：首次导入 realm 与自定义主题
+      # 可选导入 Realm 和主题
       # - ./realm-export:/opt/keycloak/data/import:ro
       # - ./themes:/opt/keycloak/themes:ro
 
@@ -95,6 +93,4 @@ services:
       timeout: 5s
       retries: 30
 
-    networks:
-      - app_net         # 与 Postgres 同网，才能解析主机名 postgres
-      - deploy_default  # 接入 Infinispan 所在网络，才能解析 deploy-ispn1-1
+    networks: [app_net, deploy_default]
