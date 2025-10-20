@@ -1,0 +1,42 @@
+groups:
+  - name: base-alerts
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target {{ $labels.job }} / {{ $labels.instance }} is down"
+          description: "No scrape data for 2m."
+
+      - alert: HighCPULoad
+        expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU load on {{ $labels.instance }}"
+          description: "5m average CPU usage > 80%."
+
+  - name: db-alerts
+    rules:
+      # MySQL：连接数过高（需要 mysqld-exporter）
+      - alert: MySQLConnectionsHigh
+        expr: mysql_global_status_threads_connected > 500
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL connections high on {{ $labels.instance }}"
+          description: "Threads_connected > 500 for 10m."
+
+      # PostgreSQL：backends 过多（需要 postgres-exporter）
+      - alert: PostgresTooManyConnections
+        expr: pg_stat_database_numbackends{datname="postgres"} > 200
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres connections high on {{ $labels.instance }}"
+          description: "numbackends > 200 for 10m."

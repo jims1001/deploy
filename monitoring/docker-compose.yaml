@@ -1,0 +1,86 @@
+services:
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Yerevan
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_DEFAULT_THEME=light
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    environment:
+      - TZ=Asia/Yerevan
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./rules.yml:/etc/prometheus/rules.yml:ro
+      - prom-data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    environment:
+      - TZ=Asia/Yerevan
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alert-data:/alertmanager
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host          # 直接暴露 9100，便于抓宿主机指标
+    pid: host
+    command:
+      - --path.rootfs=/
+    environment:
+      - TZ=Asia/Yerevan
+
+  # ===== 可选：MySQL Exporter（如果本机有 MySQL）=====
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    restart: unless-stopped
+    container_name: mysqld-exporter
+    ports:
+      - "9104:9104"
+    volumes:
+      - ./my.cnf:/etc/mysqld_exporter/my.cnf:ro
+    command:
+      - "--config.my-cnf=/etc/mysqld_exporter/my.cnf"
+
+
+  # ===== 可选：PostgreSQL Exporter（如果本机有 Postgres）=====
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Yerevan
+      - DATA_SOURCE_NAME=postgresql://postgres:your_pass@host.docker.internal:5432/postgres?sslmode=disable
+    ports:
+      - "9187:9187"
+
+volumes:
+  grafana-data:
+  prom-data:
+  alert-data:
