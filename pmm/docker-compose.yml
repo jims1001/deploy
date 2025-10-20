@@ -1,0 +1,17 @@
+services:
+  pmm-server:
+    image: percona/pmm-server:2
+    container_name: pmm-server
+    platform: linux/amd64    # 👈 加这一行
+    restart: unless-stopped
+    ports:
+      - "80:80"      # Web UI
+      - "443:443"    # （可选）启用内置 TLS 后使用
+    environment:
+      - TZ=Asia/Yerevan
+    volumes:
+      - pmm-data:/srv # 持久化 PMM（Grafana/VictoriaMetrics/设置等）
+
+volumes:
+  pmm-data:
+    driver: local
