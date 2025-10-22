@@ -1,0 +1,21 @@
+services:
+  altcha:
+    image: ghcr.io/altcha-org/sentinel:latest
+    container_name: altcha
+    restart: always
+    ports:
+      - "20010:8080"     # 宿主 20010 -> 容器 8080（ALTCHA 固定监听 8080）
+    environment:
+      - ALTCHA_SECRET=please_change_me
+      - ALTCHA_SITE_NAME=MySite
+      - ALTCHA_SITE_ORIGIN=http://<你的服务器IP>
+      - ALTCHA_DIFFICULTY=medium
+      - ALTCHA_LIFETIME=120
+      - ALTCHA_ALLOW_ORIGINS=http://localhost:3000,http://localhost:5173,http://<你的服务器IP>,http://<你的服务器IP>:20010
+      - ALTCHA_LOG_LEVEL=info
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=myStrongPass123
+    volumes:
+      - ./data:/data
+    # ❌ 删掉你现在的:
+    # command: ["--listen", ":20010"]
